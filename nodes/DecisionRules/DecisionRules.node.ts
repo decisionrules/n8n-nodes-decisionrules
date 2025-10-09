@@ -44,7 +44,7 @@ export class DecisionRules implements INodeType {
 					{ name: 'Management', value: 'managementRes' },
 					{ name: 'Job', value: 'jobRes' },
 				],
-				default: 'solve',
+				default: 'solveRes',
 			},
 			{
 				displayName: 'Operation',
@@ -61,13 +61,13 @@ export class DecisionRules implements INodeType {
 						name: 'Solve Rule',
 						value: 'solve',
 						description: 'Takes the Node input and sends its as data to defined host and performs a Solve Rule',
-						action: 'Solve Rule',
+						action: 'Solve rule',
 
 
 					},
 				],
 				default: 'solve',
-				description: 'Select the operation to perform.',
+
 			},
 			{
 				displayName: 'Operation',
@@ -98,12 +98,12 @@ export class DecisionRules implements INodeType {
 						name: 'Get Job Info',
 						value: 'jobInfo',
 						description: 'When a Job was started you can retrieve information about Job success, failure or if its in process based on Job ID',
-						action: 'Get Job Info',
+						action: 'Get job info',
 
 					},
 				],
 				default: 'startJob',
-				description: 'Select the operation to perform.',
+
 			},
 			{
 				displayName: 'Rule ID or Alias',
@@ -125,9 +125,9 @@ export class DecisionRules implements INodeType {
 				name: 'ruleVersion',
 				type: 'number',
 				default: '',
-				required: false,
+
 				placeholder: 'e.g., 2',
-				description: 'The specific version of the rule to use. If empty, the latest is used',
+				description: 'The specific version of the rule to use. If empty, the latest is used.',
 				displayOptions: {
 					show: {
 						operation: ['solve', 'startJob'],
@@ -148,15 +148,41 @@ export class DecisionRules implements INodeType {
 				},
 				options: [
 					{
-						displayName: 'Included Condition Columns',
-						name: 'includedConditionCols',
+						displayName: 'Alias Conflict Path',
+						name: 'aliasConflictPath',
 						type: 'string',
-						typeOptions: {
-							multipleValues: true,
-						},
-						default: [],
-						description: 'Columns to include in condition evaluation.',
+						default: '',
+						description: 'Path to handle alias conflicts',
 					},
+					{
+						displayName: 'Audit TTL',
+						name: 'auditTtl',
+						type: 'number',
+						default: '',
+						description: 'Time-to-live for audit logs (e.g. "30d")',
+					},
+					{
+						displayName: 'Correlation ID',
+						name: 'corrId',
+						type: 'string',
+						default: '',
+						description: 'Custom correlation ID for tracking requests',
+					},
+					{
+						displayName: 'Enable Audit',
+						name: 'audit',
+						type: 'boolean',
+						default: false,
+						description: 'Whether auditing of solver operations is active',
+					},
+					{
+						displayName: 'Enable Debug',
+						name: 'debug',
+						type: 'boolean',
+						default: false,
+						description: 'Whether debug mode for the solver is active',
+					},
+
 					{
 						displayName: 'Excluded Condition Columns',
 						name: 'excludedConditionCols',
@@ -165,42 +191,17 @@ export class DecisionRules implements INodeType {
 							multipleValues: true,
 						},
 						default: [],
-						description: 'Columns to exclude from condition evaluation.',
+						description: 'Columns to exclude from condition evaluation',
 					},
 					{
-						displayName: 'Enable Debug',
-						name: 'debug',
-						type: 'boolean',
-						default: false,
-						description: 'Enable debug mode for the solver.',
-					},
-					{
-						displayName: 'Correlation ID',
-						name: 'corrId',
+						displayName: 'Included Condition Columns',
+						name: 'includedConditionCols',
 						type: 'string',
-						default: '',
-						description: 'Custom correlation ID for tracking requests.',
-					},
-					{
-						displayName: 'Enable Audit',
-						name: 'audit',
-						type: 'boolean',
-						default: false,
-						description: 'Enable auditing of solver operations.',
-					},
-					{
-						displayName: 'Audit TTL',
-						name: 'auditTtl',
-						type: 'number',
-						default: '',
-						description: 'Time-to-live for audit logs (e.g. "30d").',
-					},
-					{
-						displayName: 'Alias Conflict Path',
-						name: 'aliasConflictPath',
-						type: 'string',
-						default: '',
-						description: 'Path to handle alias conflicts.',
+						typeOptions: {
+							multipleValues: true,
+						},
+						default: [],
+						description: 'Columns to include in condition evaluation',
 					},
 					{
 						displayName: 'Strategy',
@@ -213,7 +214,7 @@ export class DecisionRules implements INodeType {
 							{ name: 'First Match', value: 'FIRST_MATCH' },
 							{ name: 'Evaluate All', value: 'EVALUATE_ALL' },
 						],
-						description: 'Select the solver strategy.',
+						description: 'Select the solver strategy',
 					},
 				],
 			},
