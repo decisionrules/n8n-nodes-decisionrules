@@ -41,7 +41,6 @@ export class DecisionRules implements INodeType {
 				noDataExpression: true,
 				options: [
 					{ name: 'Solve', value: 'solveRes' },
-					{ name: 'Management', value: 'managementRes' },
 					{ name: 'Job', value: 'jobRes' },
 				],
 				default: 'solveRes',

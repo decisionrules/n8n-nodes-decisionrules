@@ -7,7 +7,7 @@ import {
 export class DecisionRulesApi implements ICredentialType {
     name = 'decisionRulesApi';
     displayName = 'DecisionRules Credentials API';
-    documentationUrl = 'https://your-docs-url';
+    documentationUrl = 'https://docs.decisionrules.io/doc/api/api-keys';
     icon?: Icon | undefined = `file:dr.svg`;
 
     properties: INodeProperties[] = [
