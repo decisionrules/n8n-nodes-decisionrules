@@ -19,7 +19,7 @@
 		"declaration": true,
 		"sourceMap": true,
 		"skipLibCheck": true,
-		"outDir": "./dist/",
+		"outDir": "./custom/",
 	},
 	"include": [
 		"credentials/**/*",
