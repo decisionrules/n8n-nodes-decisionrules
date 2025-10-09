@@ -4,7 +4,7 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeConnectionTypes } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionTypes } from 'n8n-workflow';
 
 export class DecisionRules implements INodeType {
 	description: INodeTypeDescription = {
@@ -240,47 +240,60 @@ export class DecisionRules implements INodeType {
 		const credentials = await this.getCredentials('decisionRulesApi');
 		const operation = this.getNodeParameter("operation" as 'resource');
 		let responseData;
-		if (operation == "solve" || operation == "startJob") {
-			const ruleId = this.getNodeParameter("ruleId" as 'resource');
-			const ruleVersion = this.getNodeParameter("ruleVersion" as 'resource');
 
-			if (operation == "solve") {
+		try {
+			if (operation == "solve" || operation == "startJob") {
+				const ruleId = this.getNodeParameter("ruleId" as 'resource');
+				const ruleVersion = this.getNodeParameter("ruleVersion" as 'resource');
+
+				if (operation == "solve") {
+					let solveOptions = {}
+					try {
+						solveOptions = this.getNodeParameter("solveOptions" as 'resource');
+					} catch {
+
+					}
+					responseData = await this.helpers.httpRequest({
+						method: 'POST',
+						url: `${credentials["host"]}/rule/solve/${ruleId}${ruleVersion ? "/" + ruleVersion : ""}`,
+						body: { data: items.map(el => el.json), options: solveOptions },
+						headers: { Authorization: `Bearer ${credentials["solverApiKey"]}` },
+						json: true,
+					});
+				}
+				if (operation == "startJob") {
+					responseData = await this.helpers.httpRequest({
+						method: 'POST',
+						url: `${credentials["host"]}/job/start/${ruleId}${ruleVersion ? "/" + ruleVersion : ""}`,
+						body: { data: items.map(el => el.json) },
+						headers: { Authorization: `Bearer ${credentials["solverApiKey"]}` },
+						json: true,
+					});
+				}
+			}
+			if (operation == "cancelJob") {
+				const jobId = this.getNodeParameter("jobId" as 'resource');
 				responseData = await this.helpers.httpRequest({
 					method: 'POST',
-					url: `${credentials["host"]}/rule/solve/${ruleId}${ruleVersion ? "/" + ruleVersion : ""}`,
-					body: { data: items.map(el => el.json) },
+					url: `${credentials["host"]}/job/cancel/${jobId}`,
 					headers: { Authorization: `Bearer ${credentials["solverApiKey"]}` },
 					json: true,
 				});
 			}
-			if (operation == "startJob") {
+			if (operation == "jobInfo") {
+				const jobId = this.getNodeParameter("jobId" as 'resource');
 				responseData = await this.helpers.httpRequest({
-					method: 'POST',
-					url: `${credentials["host"]}/job/start/${ruleId}${ruleVersion ? "/" + ruleVersion : ""}`,
-					body: { data: items.map(el => el.json) },
+					method: 'GET',
+					url: `${credentials["host"]}/job/${jobId}`,
 					headers: { Authorization: `Bearer ${credentials["solverApiKey"]}` },
 					json: true,
 				});
+
 			}
-		}
-		if (operation == "cancelJob") {
-			const jobId = this.getNodeParameter("jobId" as 'resource');
-			responseData = await this.helpers.httpRequest({
-				method: 'POST',
-				url: `${credentials["host"]}/job/cancel/${jobId}`,
-				headers: { Authorization: `Bearer ${credentials["solverApiKey"]}` },
-				json: true,
-			});
-		}
-		if (operation == "jobInfo") {
-			const jobId = this.getNodeParameter("jobId" as 'resource');
-			responseData = await this.helpers.httpRequest({
-				method: 'GET',
-				url: `${credentials["host"]}/job/${jobId}`,
-				headers: { Authorization: `Bearer ${credentials["solverApiKey"]}` },
-				json: true,
-			});
+		} catch (e) {
+			throw new NodeApiError(this.getNode(), e)
 		}
 		return [this.helpers.returnJsonArray(responseData)];
+
 	}
 }
