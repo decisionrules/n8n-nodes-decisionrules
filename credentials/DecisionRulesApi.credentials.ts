@@ -1,5 +1,6 @@
 import {
     Icon,
+    ICredentialTestRequest,
     ICredentialType,
     INodeProperties,
 } from 'n8n-workflow';
@@ -19,15 +20,6 @@ export class DecisionRulesApi implements ICredentialType {
             required: true
         },
         {
-            displayName: 'Management API Key',
-            name: 'managementApiKey',
-            type: 'string',
-            default: '',
-            typeOptions: {
-                password: true,
-            },
-        },
-        {
             displayName: 'Solver API Key',
             name: 'solverApiKey',
             type: 'string',
@@ -37,4 +29,14 @@ export class DecisionRulesApi implements ICredentialType {
             },
         },
     ];
+
+    test: ICredentialTestRequest = {
+        request: {
+            baseURL: 'https://api.decisionrules.io',
+            url: '/rule/solve',
+            headers: {
+                Authorization: 'Bearer {{$credentials.solverApiKey}}',
+            },
+        },
+    };
 }

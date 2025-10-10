@@ -1,6 +1,6 @@
 {
   "name": "@decisionrules/n8n-nodes-decisionrules",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "n8n nodes for DecisionRules",
   "keywords": [
     "n8n-community-node-package"

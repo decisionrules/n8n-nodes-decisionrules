@@ -59,7 +59,7 @@ export class DecisionRules implements INodeType {
 					{
 						name: 'Solve Rule',
 						value: 'solve',
-						description: 'Takes the Node input and sends its as data to defined host and performs a Solve Rule',
+						description: 'Takes the Node input and sends its as data to defined host and performs a Rule Solve',
 						action: 'Solve rule',
 
 
