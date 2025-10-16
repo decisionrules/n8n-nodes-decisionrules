@@ -1,4 +1,5 @@
 import {
+    IAuthenticate,
     Icon,
     ICredentialTestRequest,
     ICredentialType,
@@ -29,6 +30,15 @@ export class DecisionRulesApi implements ICredentialType {
             },
         },
     ];
+
+    authenticate: IAuthenticate = {
+        type: 'generic',
+        properties: {
+            headers: {
+                Authorization: '=Bearer {{$credentials.solverApiKey}}',
+            },
+        },
+    };
 
     test: ICredentialTestRequest = {
         request: {

@@ -27,12 +27,6 @@ export class DecisionRules implements INodeType {
 				required: true,
 			},
 		],
-		requestDefaults: {
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-			},
-		},
 		properties: [
 			{
 				displayName: 'Resource',
@@ -59,7 +53,7 @@ export class DecisionRules implements INodeType {
 					{
 						name: 'Solve Rule',
 						value: 'solve',
-						description: 'Takes the Node input and sends its as data to defined host and performs a Rule Solve',
+						description: 'Takes the node input, sends it as data to the defined host, and solves a rule',
 						action: 'Solve rule',
 
 
@@ -82,7 +76,7 @@ export class DecisionRules implements INodeType {
 					{
 						name: 'Start Job',
 						value: 'startJob',
-						description: 'Takes the Node input and sends its as data to defined host and starts a Job on Integration Flow Rule',
+						description: 'Takes the node input, sends it as data to the defined host, and starts a job for an integration flow rule',
 						action: 'Start a job',
 
 					},
@@ -96,7 +90,7 @@ export class DecisionRules implements INodeType {
 					{
 						name: 'Get Job Info',
 						value: 'jobInfo',
-						description: 'When a Job was started you can retrieve information about Job success, failure or if its in process based on Job ID',
+						description: 'Retrieves information about a job\'s status (e.g., success, failure, or in process) based on its ID',
 						action: 'Get job info',
 
 					},
@@ -122,7 +116,7 @@ export class DecisionRules implements INodeType {
 			{
 				displayName: 'Rule Version',
 				name: 'ruleVersion',
-				type: 'number',
+				type: 'string',
 				default: '',
 
 				placeholder: 'e.g., 2',
@@ -172,14 +166,14 @@ export class DecisionRules implements INodeType {
 						name: 'audit',
 						type: 'boolean',
 						default: false,
-						description: 'Whether auditing of solver operations is active',
+						description: 'Whether to enable auditing for solver operations',
 					},
 					{
 						displayName: 'Enable Debug',
 						name: 'debug',
 						type: 'boolean',
 						default: false,
-						description: 'Whether debug mode for the solver is active',
+						description: 'Whether to enable debug mode for the solver',
 					},
 
 					{
@@ -239,6 +233,7 @@ export class DecisionRules implements INodeType {
 		const items = this.getInputData();
 		const credentials = await this.getCredentials('decisionRulesApi');
 		const operation = this.getNodeParameter("operation" as 'resource');
+		const host = (credentials["host"] as string).endsWith('/') ? (credentials["host"] as string).slice(0, -1) : credentials["host"];
 		let responseData;
 
 		try {
@@ -253,39 +248,35 @@ export class DecisionRules implements INodeType {
 					} catch {
 
 					}
-					responseData = await this.helpers.httpRequest({
+					responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'decisionRulesApi', {
 						method: 'POST',
-						url: `${credentials["host"]}/rule/solve/${ruleId}${ruleVersion ? "/" + ruleVersion : ""}`,
+						url: `${host}/rule/solve/${ruleId}${ruleVersion ? "/" + ruleVersion : ""}`,
 						body: { data: items.map(el => el.json), options: solveOptions },
-						headers: { Authorization: `Bearer ${credentials["solverApiKey"]}` },
 						json: true,
 					});
 				}
 				if (operation == "startJob") {
-					responseData = await this.helpers.httpRequest({
+					responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'decisionRulesApi', {
 						method: 'POST',
-						url: `${credentials["host"]}/job/start/${ruleId}${ruleVersion ? "/" + ruleVersion : ""}`,
+						url: `${host}/job/start/${ruleId}${ruleVersion ? "/" + ruleVersion : ""}`,
 						body: { data: items.map(el => el.json) },
-						headers: { Authorization: `Bearer ${credentials["solverApiKey"]}` },
 						json: true,
 					});
 				}
 			}
 			if (operation == "cancelJob") {
 				const jobId = this.getNodeParameter("jobId" as 'resource');
-				responseData = await this.helpers.httpRequest({
+				responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'decisionRulesApi', {
 					method: 'POST',
-					url: `${credentials["host"]}/job/cancel/${jobId}`,
-					headers: { Authorization: `Bearer ${credentials["solverApiKey"]}` },
+					url: `${host}/job/cancel/${jobId}`,
 					json: true,
 				});
 			}
 			if (operation == "jobInfo") {
 				const jobId = this.getNodeParameter("jobId" as 'resource');
-				responseData = await this.helpers.httpRequest({
+				responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'decisionRulesApi', {
 					method: 'GET',
-					url: `${credentials["host"]}/job/${jobId}`,
-					headers: { Authorization: `Bearer ${credentials["solverApiKey"]}` },
+					url: `${host}/job/${jobId}`,
 					json: true,
 				});
 
@@ -293,7 +284,6 @@ export class DecisionRules implements INodeType {
 		} catch (e) {
 			throw new NodeApiError(this.getNode(), e)
 		}
-		return [this.helpers.returnJsonArray(responseData)];
-
+		return [responseData.map((data: any, i: number) => ({ json: data, pairedItem: { item: i } }))];
 	}
 }
