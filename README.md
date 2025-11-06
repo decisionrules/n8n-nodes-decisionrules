@@ -116,6 +116,39 @@ Retrieves the status and information (e.g., success, failure, in-process) for a 
 - Cancel Job:
 Cancels a running or waiting job using its Job ID.
 
+### Management
+The Management operations allow you to programmatically manage your DecisionRules rules, folders, and tags.
+
+#### Rule Management
+- **Get Rule**: Retrieves all information about a rule, including its content, version, input/output schemas. Can fetch by rule ID, alias, or path.
+- **Create Rule**: Creates a new rule based on the request body.
+- **Create New Rule Version**: Creates a new version of an existing rule with modifications.
+- **Update Rule**: Modifies an existing rule (cannot change rule ID, version, alias, or last update date).
+- **Update Rule Status**: Changes rule status between 'pending' and 'published'.
+- **Delete Rule**: Deletes a rule by ID, alias, or path.
+- **Lock Rule**: Locks or unlocks a rule to prevent/allow modifications.
+- **Get Rules For Space**: Retrieves all rules and rule flows in the current space.
+
+#### Rule Analysis
+- **Find Dependencies**: Identifies all dependencies for a specific rule.
+- **Find Duplicates**: Finds duplicate rules in decision tables.
+
+#### Tag Management
+- **Get Tags**: Retrieves all rules/rule flows with specific tags.
+- **Update Tags**: Adds tags to a rule (all versions or specific version).
+- **Delete Tags**: Removes tags from a rule (all versions or specific version).
+
+#### Folder Management
+- **Get Folder Structure**: Retrieves the folder hierarchy and contents by node ID or path.
+- **Create Folder**: Creates a new folder structure under a target location.
+- **Update Node Folder Structure**: Modifies existing folder structure and moves rules.
+- **Delete Folder**: Deletes a folder and optionally all its contents.
+- **Rename Folder**: Changes the name of a folder.
+- **Move Folder**: Moves folders and/or rules to a different parent location.
+- **Export Folder**: Exports a folder with all its rules.
+- **Import Folder**: Imports a folder structure with rules into a target location.
+- **Find Folder or Rule**: Searches for folders and rules by various attributes (name, ID, tags, type, etc.).
+
 ---
 
 ## Credentials
@@ -130,6 +163,16 @@ To configure your credentials:
 3.  In n8n, go to the Credentials section and add new credentials for the 'DecisionRules API'.
 4.  Enter your API Token and host in the respective field.
 
+### For Management API (Management Operations)
+
+To configure your Management API credentials:
+1. Log in to your DecisionRules account.
+2. Use the same host format as above (e.g., `api.decisionrules.io`).
+3. Navigate to **Space > API Keys > Management** to find your Management API Token.
+4. In n8n, add the Management API credentials.
+5. Enter your Management API Token and host in the respective fields.
+
+
 ---
 
 ## Compatibility
@@ -142,15 +185,17 @@ This node has been tested with n8n version 1.16.3.
 
 This node is designed to integrate your n8n workflows with the DecisionRules engine. Here's how to understand its behavior:
 
-### Operations Using Input Data (`Solve Rule`, `Start Job`)
+### Operations Using Input Data (`Solve Rule`, `Start Job`, `Create Rule`, `Create New Rule Version`, `Update Rule`, `Create Folder`, `Update Node Folder Structure`, `Import Folder`)
 
-The `Solve Rule` and `Start Job` operations are designed to process data from previous nodes in your workflow. The JSON output of a preceding node will be used as the input payload for the DecisionRules API call.
+These operations process data from previous nodes in your workflow. The JSON output of a preceding node will be used as the input payload for the DecisionRules API call.
 
 **Example:** You can have an 'HTTP Request' node that fetches user data. When you connect it to the DecisionRules node and select the `Solve Rule` operation, the fetched user data is sent to your rule for evaluation. The result of that rule is then available as the output of the DecisionRules node for the next steps in your workflow.
 
-### Operations Using Node Parameters (`Get Job Info`, `Cancel Job`)
+**Management Example:** You can prepare a rule definition in JSON format in a previous node, then use `Create Rule` to add it to your DecisionRules space.
 
-The `Get Job Info` and `Cancel Job` operations do **not** use the data from previous nodes. Instead, they rely on parameters you configure directly in the node's properties panel in the n8n UI, such as the `Job ID`.
+### Operations Using Node Parameters (All other operations)
+
+Operations like `Get Job Info`, `Cancel Job`, `Get Rule`, `Delete Rule`, etc. do **not** use the data from previous nodes. Instead, they rely on parameters you configure directly in the node's properties panel in the n8n UI, such as `Job ID`, `Rule ID`, `Node ID`, or `Path`.
 
 **Example:** After using a `Start Job` operation, you can use a 'Wait' node and then a `Get Job Info` node to check the status of that job. You would pass the `jobId` from the `Start Job` output into the 'Job ID' field of the `Get Job Info` node.
 
@@ -165,6 +210,7 @@ The `Get Job Info` and `Cancel Job` operations do **not** use the data from prev
 ### Authentication errors
 - Verify your **Host** is correct (e.g., `https://api.decisionrules.io`).
 - Verify your **Solver API Key** is correct.
+- Verify your **Management API Key** is correct for Management operations.
 
 ---
 
@@ -178,6 +224,8 @@ The `Get Job Info` and `Cancel Job` operations do **not** use the data from prev
 ### Operation failures
 - Check that the **input parameters** from the previous node are a valid JSON object.
 - For **Solve Rule** and **Start Job**, ensure the incoming data structure matches the expected input model for your rule in DecisionRules.
+- For **Create Rule**, **Update Rule**, and **Create New Rule Version**, ensure the rule definition follows the correct format.
+- For **Folder operations**, verify the folder structure and node IDs are valid.
 - Review the **error message** in the n8n output panel for detailed error messages from the DecisionRules API.
 
 ---

@@ -1,10 +1,15 @@
 import type {
+	CredentialInformation,
 	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
 import { NodeApiError, NodeConnectionTypes } from 'n8n-workflow';
+import { solveOperations, solveParameters } from './categories/solve/solve';
+import { jobOperations, jobParameters } from './categories/job/job';
+import { commonParameters } from './categories/common';
+import { managementOperations, managementParameters } from './categories/management/management';
 
 export class DecisionRules implements INodeType {
 	description: INodeTypeDescription = {
@@ -35,197 +40,21 @@ export class DecisionRules implements INodeType {
 				noDataExpression: true,
 				options: [
 					{ name: 'Solve', value: 'solveRes' },
+					{ name: 'Management Rule', value: 'managementRuleRes' },
+					{ name: 'Management Folder', value: 'managementFolderRes' },
+					{ name: 'Management Tag', value: 'managementTagRes' },
+					{ name: 'Management Tools', value: 'managementToolsRes' },
 					{ name: 'Job', value: 'jobRes' },
 				],
 				default: 'solveRes',
 			},
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: {
-					show: {
-						resource: ['solveRes'],
-					},
-				},
-				options: [
-					{
-						name: 'Solve Rule',
-						value: 'solve',
-						description: 'Takes the node input, sends it as data to the defined host, and solves a rule',
-						action: 'Solve rule',
-
-
-					},
-				],
-				default: 'solve',
-
-			},
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: {
-					show: {
-						resource: ['jobRes'],
-					}
-				},
-				options: [
-					{
-						name: 'Start Job',
-						value: 'startJob',
-						description: 'Takes the node input, sends it as data to the defined host, and starts a job for an integration flow rule',
-						action: 'Start a job',
-
-					},
-					{
-						name: 'Cancel Job',
-						value: 'cancelJob',
-						description: 'Cancels a running job',
-						action: 'Cancel a job',
-
-					},
-					{
-						name: 'Get Job Info',
-						value: 'jobInfo',
-						description: 'Retrieves information about a job\'s status (e.g., success, failure, or in process) based on its ID',
-						action: 'Get job info',
-
-					},
-				],
-				default: 'startJob',
-
-			},
-			{
-				displayName: 'Rule ID or Alias',
-				name: 'ruleId',
-				type: 'string',
-				default: '',
-				required: true,
-				placeholder: 'my-rule-alias or ID...',
-				description: 'The unique identifier or alias for the rule',
-				displayOptions: {
-					show: {
-						operation: ['solve', 'startJob'],
-						resource: ['solveRes', 'jobRes'],
-					},
-				},
-			},
-			{
-				displayName: 'Rule Version',
-				name: 'ruleVersion',
-				type: 'string',
-				default: '',
-
-				placeholder: 'e.g., 2',
-				description: 'The specific version of the rule to use. If empty, the latest is used.',
-				displayOptions: {
-					show: {
-						operation: ['solve', 'startJob'],
-						resource: ['solveRes', 'jobRes'],
-					},
-				},
-			},
-			{
-				displayName: 'Solve Options',
-				name: 'solveOptions',
-				type: 'collection',
-				default: {},
-				displayOptions: {
-					show: {
-						operation: ['solve'],
-						resource: ['solveRes'],
-					},
-				},
-				options: [
-					{
-						displayName: 'Alias Conflict Path',
-						name: 'aliasConflictPath',
-						type: 'string',
-						default: '',
-						description: 'Path to handle alias conflicts',
-					},
-					{
-						displayName: 'Audit TTL',
-						name: 'auditTtl',
-						type: 'number',
-						default: '',
-						description: 'Time-to-live for audit logs (e.g. "30d")',
-					},
-					{
-						displayName: 'Correlation ID',
-						name: 'corrId',
-						type: 'string',
-						default: '',
-						description: 'Custom correlation ID for tracking requests',
-					},
-					{
-						displayName: 'Enable Audit',
-						name: 'audit',
-						type: 'boolean',
-						default: false,
-						description: 'Whether to enable auditing for solver operations',
-					},
-					{
-						displayName: 'Enable Debug',
-						name: 'debug',
-						type: 'boolean',
-						default: false,
-						description: 'Whether to enable debug mode for the solver',
-					},
-
-					{
-						displayName: 'Excluded Condition Columns',
-						name: 'excludedConditionCols',
-						type: 'string',
-						typeOptions: {
-							multipleValues: true,
-						},
-						default: [],
-						description: 'Columns to exclude from condition evaluation',
-					},
-					{
-						displayName: 'Included Condition Columns',
-						name: 'includedConditionCols',
-						type: 'string',
-						typeOptions: {
-							multipleValues: true,
-						},
-						default: [],
-						description: 'Columns to include in condition evaluation',
-					},
-					{
-						displayName: 'Strategy',
-						name: 'strategy',
-						type: 'options',
-						default: 'STANDARD',
-						options: [
-							{ name: 'Standard', value: 'STANDARD' },
-							{ name: 'Array', value: 'ARRAY' },
-							{ name: 'First Match', value: 'FIRST_MATCH' },
-							{ name: 'Evaluate All', value: 'EVALUATE_ALL' },
-						],
-						description: 'Select the solver strategy',
-					},
-				],
-			},
-			{
-				displayName: 'Job ID',
-				name: 'jobId',
-				type: 'string',
-				default: '',
-				required: true,
-				placeholder: 'e.g., a1b2c3d4-e5f6-7890-1234-567890abcdef',
-				description: 'The unique identifier for the job',
-				displayOptions: {
-					show: {
-						operation: ['cancelJob', 'jobInfo'],
-						resource: ['jobRes'],
-					},
-				},
-			},
+			...solveOperations,
+			...jobOperations,
+			...managementOperations,
+			...solveParameters,
+			...jobParameters,
+			...managementParameters,
+			...commonParameters,
 		],
 	};
 
@@ -234,56 +63,315 @@ export class DecisionRules implements INodeType {
 		const credentials = await this.getCredentials('decisionRulesApi');
 		const operation = this.getNodeParameter("operation" as 'resource');
 		const host = (credentials["host"] as string).endsWith('/') ? (credentials["host"] as string).slice(0, -1) : credentials["host"];
+		const managementHost = host + "/api"
+		const managementApiKey = credentials["managementApiKey"]
+		const solverApiKey = credentials["solverApiKey"]
 		let responseData;
 
+		const getPath = (host: CredentialInformation, type: any[], id: any, version?: any, path?: any): string => {
+			const hostWithType = `${host}/${type.join("/")}/`
+			const idWithVersion = `${id ? `${id}/${version}` : ''}`
+			const pathWithVersion = `${path ? `?path=${path}${version ? `&version=${version}` : ''}` : ''}`
+			return `${hostWithType}${idWithVersion ? idWithVersion : pathWithVersion}`
+		}
+
+		const getOptionalParam = (
+			name: string,
+			defaultValue: any = undefined,
+			itemIndex = 0,
+		) => {
+			try {
+				return this.getNodeParameter(name, itemIndex, defaultValue);
+			} catch (error) {
+				return defaultValue;
+			}
+		};
+
+		const ruleId = getOptionalParam("ruleId");
+		const ruleVersion = getOptionalParam("ruleVersion");
+		const pathFolder = getOptionalParam("pathFolder");
+		const path = getOptionalParam("path");
+		const nodeId = getOptionalParam('nodeId');
+
 		try {
-			if (operation == "solve" || operation == "startJob") {
-				const ruleId = this.getNodeParameter("ruleId" as 'resource');
-				const ruleVersion = this.getNodeParameter("ruleVersion" as 'resource');
-
-				if (operation == "solve") {
-					let solveOptions = {}
-					try {
-						solveOptions = this.getNodeParameter("solveOptions" as 'resource');
-					} catch {
-
-					}
-					responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'decisionRulesApi', {
+			switch (operation) {
+				case "solve": {
+					const solveOptions = getOptionalParam("solveOptions");
+					responseData = await this.helpers.httpRequest.call(this, {
 						method: 'POST',
 						url: `${host}/rule/solve/${ruleId}${ruleVersion ? "/" + ruleVersion : ""}`,
 						body: { data: items.map(el => el.json), options: solveOptions },
+						headers: {
+							'Authorization': `Bearer ${solverApiKey}`,
+						},
 						json: true,
 					});
+					break;
 				}
-				if (operation == "startJob") {
-					responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'decisionRulesApi', {
+				case "startJob": {
+					responseData = await this.helpers.httpRequest.call(this, {
 						method: 'POST',
 						url: `${host}/job/start/${ruleId}${ruleVersion ? "/" + ruleVersion : ""}`,
 						body: { data: items.map(el => el.json) },
+						headers: {
+							'Authorization': `Bearer ${solverApiKey}`,
+						},
 						json: true,
 					});
+					break;
 				}
-			}
-			if (operation == "cancelJob") {
-				const jobId = this.getNodeParameter("jobId" as 'resource');
-				responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'decisionRulesApi', {
-					method: 'POST',
-					url: `${host}/job/cancel/${jobId}`,
-					json: true,
-				});
-			}
-			if (operation == "jobInfo") {
-				const jobId = this.getNodeParameter("jobId" as 'resource');
-				responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'decisionRulesApi', {
-					method: 'GET',
-					url: `${host}/job/${jobId}`,
-					json: true,
-				});
+				case 'getRule': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'GET',
+						url: getPath(managementHost, ["rule"], ruleId, ruleVersion, path),
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						json: true,
+					});
+					break;
+				}
+				case 'createNewRuleVersion': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'POST',
+						url: `${managementHost}/rule/${ruleId}/new-version`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						body: items[0].json,
+						json: true,
+					});
+					break;
+				}
+				case 'updateRule': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'PUT',
+						url: `${managementHost}/rule/${ruleId}/${ruleVersion}`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						body: items[0].json,
+						json: true,
+					});
+					break;
+				}
+				case 'updateRuleStatus': {
+					const status = this.getNodeParameter('status', 0) as string;
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'PUT',
+						url: `${managementHost}/rule/status/${ruleId}/${status}/${ruleVersion}`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						json: true,
+					});
 
+					break;
+				}
+				case 'deleteRule': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'DELETE',
+						url: `${managementHost}/rule/${ruleId}/${ruleVersion}`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						json: true,
+					});
+					break;
+				}
+				case 'lockRule': {
+					const locked = this.getNodeParameter('locked' as 'resource');
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'PATCH',
+						url: `${managementHost}/rule/lock/${ruleId}/${ruleVersion}`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						body: { locked },
+						json: true,
+					});
+					break;
+				}
+				case 'getTags': {
+					const tags = (this.getNodeParameter('tagsList', 0) as any).tags;
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'GET',
+						url: `${managementHost}/tags/items${tags.length ? `?tags=${tags.map((el: any) => el.tag).join(",")}` : ''}`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						json: true,
+					});
+					break;
+				}
+				case 'updateTags': {
+					const tags = (this.getNodeParameter('updateTagsList', 0) as any).tags;
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'PATCH',
+						url: `${managementHost}/tags/${ruleId}/${ruleVersion}`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						body: tags.map((el: any) => { return { tagName: el.tag, color: el.color } }),
+						json: true,
+					});
+
+					break;
+				}
+				case 'deleteTags': {
+					const tags = (this.getNodeParameter('tagsList', 0) as any).tags;
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'DELETE',
+						url: `${managementHost}/tags/${ruleId}/${ruleVersion}${tags.length ? `?tags=${tags.map((el: any) => el.tag).join(",")}` : ''}`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						json: true,
+					});
+					break;
+				}
+				case 'findDependencies': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'GET',
+						url: `${managementHost}/tools/dependencies/${ruleId}/${ruleVersion}`,
+						headers: { 'Authorization': 'Bearer ' + managementApiKey },
+						json: true,
+					});
+					break;
+				}
+				case 'findDuplicates': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'GET',
+						url: `${managementHost}/tools/duplicates/${ruleId}/${ruleVersion}`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						json: true,
+					});
+					break;
+				}
+				case 'getRulesForSpace': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'GET',
+						url: `${managementHost}/space/items`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						json: true,
+					});
+					break;
+				}
+				case 'createRule': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'POST',
+						url: `${managementHost}/rule`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						body: items[0].json,
+						json: true,
+					});
+					break;
+				}
+				case 'getFolderStructure': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'GET',
+						url: getPath(managementHost, ["folder"], nodeId, '', pathFolder),
+
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						json: true,
+					});
+					break;
+				}
+				case 'createFolder': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'POST',
+						url: getPath(managementHost, ["folder"], nodeId, '', pathFolder),
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						body: items[0].json,
+						json: true,
+					});
+					break;
+				}
+				case 'updateNodeFolderStructure': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'PUT',
+						url: getPath(managementHost, ["folder"], nodeId, '', pathFolder),
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						body: items[0].json,
+						json: true,
+					});
+					break;
+				}
+				case 'exportFolder': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'GET',
+						url: getPath(managementHost, ["folder", "export"], nodeId, '', pathFolder),
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						json: true,
+					});
+					break;
+				}
+				case 'importFolder': {
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'POST',
+						url: `${managementHost}/folder/import/${nodeId}`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						body: items[0].json,
+						json: true,
+					});
+					break;
+				}
+				case 'deleteFolder': {
+					const deleteAll = getOptionalParam('deleteAll', false) as boolean;
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'DELETE',
+						url: getPath(managementHost, ["folder"], nodeId, '', pathFolder),
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						qs: { deleteAll },
+						json: true,
+					});
+					break;
+				}
+				case 'renameFolder': {
+					const name = this.getNodeParameter('newName', 0) as string;
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'PATCH',
+						url: getPath(managementHost, ["folder", "rename"], nodeId, '', pathFolder),
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						body: { name },
+						json: true,
+					});
+					break;
+				}
+				case 'moveFolder': {
+					const targetId = this.getNodeParameter('nodeId', 0) as string;
+					const nodes = (this.getNodeParameter('nodes', 0) as any).nodes;
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'PUT',
+						url: `${managementHost}/folder/move`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						body: { targetId, nodes },
+						json: true,
+					});
+					break;
+				}
+				case 'findFolderOrRule': {
+					const findOptions = getOptionalParam('findOptions', {});
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'POST',
+						url: `${managementHost}/folder/find`,
+						headers: { 'Authorization': `Bearer ${managementApiKey}` },
+						body: findOptions,
+						json: true,
+					});
+					break;
+				}
+				case "cancelJob": {
+					const jobId = this.getNodeParameter("jobId" as 'resource');
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'POST',
+						url: `${host}/job/cancel/${jobId}`,
+						headers: {
+							'Authorization': `Bearer ${solverApiKey}`,
+						},
+						json: true,
+					});
+					break;
+				}
+				case "jobInfo": {
+					const jobId = this.getNodeParameter("jobId" as 'resource');
+					responseData = await this.helpers.httpRequest.call(this, {
+						method: 'GET',
+						url: `${host}/job/${jobId}`,
+						headers: {
+							'Authorization': `Bearer ${solverApiKey}`,
+						},
+						json: true,
+					});
+					break;
+				}
 			}
 		} catch (e) {
 			throw new NodeApiError(this.getNode(), e)
 		}
+		responseData = Array.isArray(responseData) ? responseData : [responseData]
 		return [responseData.map((data: any, i: number) => ({ json: data, pairedItem: { item: i } }))];
 	}
 }
